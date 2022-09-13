@@ -1,0 +1,13 @@
+node_modules
+.gitignore
+.eslint*
+.prettierrc
+.idea
+
+**/*.ts
+*.ts
+
+**/*.d.ts
+*.d.ts
+
+./tsconfig.json
