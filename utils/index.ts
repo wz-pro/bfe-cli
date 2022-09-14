@@ -72,5 +72,5 @@ export function writeAsync(output:WriteStream, content:string){
 }
 
 export function getCachePath(){
-  return path.resolve(process.cwd(), 'node_modules/.cache/bcs-tools');
+  return path.resolve(process.cwd(), 'node_modules/.cache/bfe-cli');
 }

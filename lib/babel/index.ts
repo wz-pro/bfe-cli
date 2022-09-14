@@ -1,18 +1,17 @@
 export enum BabelBuildType {
-  NODE,
   ESM='esm',
   CJS='cjs',
   UMD='umd'
 }
 
-export const getBabelConfig = (type: BabelBuildType, isTs= false)=>{
+export const getBabelConfig = (type: BabelBuildType, isTs= false, isNode = false)=>{
   return {
     presets: [
         [
           require.resolve('@babel/preset-env'),
           {
             targets:
-              type ? {
+              !isNode? {
                 browsers: [
                   "last 2 versions",
                   "IE 10"
@@ -21,11 +20,11 @@ export const getBabelConfig = (type: BabelBuildType, isTs= false)=>{
             modules: type === BabelBuildType.ESM? false : 'auto'
           }
         ],
-      type? [require.resolve('@babel/preset-react'), { "runtime": "automatic" }]: [],
-      require.resolve('@babel/preset-typescript'),
+        ...(isNode? []:[[require.resolve('@babel/preset-react'), { "runtime": "automatic" }]]),
+        ...(isTs? [[require.resolve('@babel/preset-typescript')]]: []),
     ],
     plugins: [
-      type? require.resolve('babel-plugin-react-require'): [],
+        ...(!isNode? [require.resolve('babel-plugin-react-require')]: []),
       require.resolve("@babel/plugin-transform-runtime"),
       require.resolve('@babel/plugin-syntax-dynamic-import'),
       [require.resolve("@babel/plugin-proposal-decorators"), { "legacy": true }],
