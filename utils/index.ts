@@ -20,7 +20,7 @@ export const exec = async (cmd = '')=>{
 
 export function upload(host:string, port:number, path:string, Cookie:string, uploadFilePath:string) {
   return new Promise((resolve, reject)=>{
-    const boundaryKey = '----' + new Date().getTime();    // 用于标识请求数据段
+    const boundaryKey = '----' + new Date().getTime();
     const options = {
       host,
       port,
@@ -45,7 +45,6 @@ export function upload(host:string, port:number, path:string, Cookie:string, upl
       `--${boundaryKey}rn Content-Disposition: form-data; name="file"; filename="myTest.jpg"rn Content-Type: application/x-msdownload`
     );
 
-    // 创建一个读取操作的数据流
     const fileStream = fs.createReadStream(uploadFilePath);
     fileStream.pipe(req, {end: false});
     fileStream.on('end', function(error: Error) {

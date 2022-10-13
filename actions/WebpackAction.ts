@@ -1,17 +1,17 @@
 import chalk from 'chalk';
+import fs from 'fs';
 import lodash from 'lodash';
+import path from "path";
 import util from 'util';
 import webpack from 'webpack';
 import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 import WebpackDevServer from 'webpack-dev-server';
 
 import { WebpackInput, WebpackOption } from '../commands/WebpackCommander';
+import { getThemeValue } from '../lib/webpack/common';
 import { getDevConfig } from '../lib/webpack/dev';
 import { getProdConfig } from '../lib/webpack/prod';
 import { AbstractAction } from "./AbstractAction";
-import { getThemeValue } from '../lib/webpack/common';
-import path from "path";
-import fs from 'fs';
 
 const ENV = {
   dev: 'dev',

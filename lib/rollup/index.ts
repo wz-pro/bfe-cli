@@ -30,31 +30,39 @@ interface rollupConfigParams{
   isNode: boolean;
 }
 
+export interface AllConfigs extends rollupConfigParams{
+  cwd: string
+  isTs: boolean
+  isLerna: boolean
+}
+
 const babelExtensions = [...DEFAULT_EXTENSIONS, '.ts', '.tsx'];
 
-const getPlugins = (type: BabelBuildType, isTs = false, isNode = false): Plugin[]=>{
+const getPlugins = ({type, isTs = false, isNode = false, cwd, isLerna}: AllConfigs): Plugin[]=>{
   const babelConfigs: RollupBabelInputPluginOptions = {
-    ...getBabelConfig(BabelBuildType.CJS, isTs, isNode),
-    exclude: "**/node_modules/**",
+    ...getBabelConfig(type, isTs, isNode),
+    exclude: "node_modules/**",
     babelHelpers: "runtime",
     extensions: [...DEFAULT_EXTENSIONS, '.ts', '.tsx'],
   };
 
   const tsConfigPath = [
-     path.resolve(process.cwd(), 'tsconfig.json'),
-     path.resolve(__dirname, '../../templates/tsconfig-components.json'),
-   ].find(fs.existsSync)
+    path.resolve(cwd, 'tsconfig.json'),
+    ...(isLerna? [path.resolve(cwd, '../../tsconfig.json')]: []),
+    path.resolve(__dirname, '../../templates/tsconfig-components.json'),
+   ].find(fs.existsSync) as string;
 
   const tsConfigData = tsConfigPath? require(tsConfigPath): {};
+
   tsConfigData.compilerOptions  = Object.assign(tsConfigData.compilerOptions||{}, {
     declaration: true,
-    baseUrl: process.cwd(),
-    declarationDir: 'types',
-})
+    baseUrl: cwd,
+    declarationDir: 'types'
+  })
 
+  tsConfigData.exclude = [...(tsConfigData.exclude || []), 'types'];
 
   return [
-
       ...(!isNode? [
           url(),
           svgr(),
@@ -62,11 +70,11 @@ const getPlugins = (type: BabelBuildType, isTs = false, isNode = false): Plugin[
           ...getPostCssConfig() })]:
           []
       ),
-    nodeResolve({ extensions: babelExtensions }),
+    nodeResolve({ extensions: babelExtensions, preferBuiltins: true }),
     commonjs(),
     ...(isTs? [
       typescript({
-        cwd: process.cwd(),
+        cwd: cwd,
         typescript: ts,
         clean: true,
         cacheRoot: `${getCachePath()}/typescript2_cache`,
@@ -78,6 +86,7 @@ const getPlugins = (type: BabelBuildType, isTs = false, isNode = false): Plugin[
             module: 'esnext',
           },
         },
+        exclude: [ "*.d.ts", "**/*.d.ts" ]
       })
     ]: []),
     babel(babelConfigs),
@@ -91,18 +100,17 @@ const filePathMap = {
   [BabelBuildType.ESM]: 'esm',
 };
 
-export const getRollupConfig = async (params: rollupConfigParams)=>{
-  const { inputFilePath, type, isNode }= params;
-  const cwd = process.cwd();
+export const getRollupConfig = async (params: AllConfigs)=>{
+  const { inputFilePath, type, cwd }= params;
   const config: RollupOptions = { input: inputFilePath}
-  const pkg: Partial<PKG> = await import(path.resolve(process.cwd(), 'package.json'));
+  const pkg: Partial<PKG> = await import(path.resolve(cwd, 'package.json'));
   config.output = {
     format: type as InternalModuleFormat,
     file: path.resolve(cwd, `${filePathMap[type]}/index.js`),
     name: pkg.name || 'components',
     exports: type === BabelBuildType.CJS? 'auto' : 'default'
   }
-  config.plugins = getPlugins(type, /\.(ts|tsx)$/.test(config.input as string), isNode);
+  config.plugins = getPlugins(params);
   config.external = Object.keys(pkg.peerDependencies || {});
   return config;
 };

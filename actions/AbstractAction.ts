@@ -1,6 +1,5 @@
 import chalk from 'chalk';
 import fs from 'fs';
-import { values } from 'lodash';
 import path from 'path';
 
 interface Input<T, K extends keyof T> {
