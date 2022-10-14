@@ -1,9 +1,9 @@
+import AntdWebpackThemePlugin from 'antd-dynamic-theme-plugin';
 import CopyPlugin from 'copy-webpack-plugin';
 import fs from 'fs';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import path from 'path';
 import { Configuration, RuleSetUse } from 'webpack';
-import AntdWebpackThemePlugin from 'antd-dynamic-theme-plugin';
 
 import { BabelBuildType, getBabelConfig } from '../babel';
 import { getPostCssConfig } from '../postcss';
@@ -54,15 +54,6 @@ export const getThemeValue = async ()=>{
   return {light, dark, themeVariables};
 }
 
-const babelConfig = getBabelConfig(BabelBuildType.UMD);
-const babelLoaderOptions = {
-  ...babelConfig,
-  plugins: [
-    ...babelConfig.plugins,
-  ],
-  cacheDirectory: true,
-};
-
 const basePath = process.cwd();
 
 const postCssLoader = {
@@ -73,7 +64,19 @@ const postCssLoader = {
 };
 
 export const getCommonConfig = async (config:any, type:string): Promise<Configuration>=>{
+  const entry = config.entryFile || path.resolve(basePath, 'src/main.tsx');
+  const babelConfig = getBabelConfig(BabelBuildType.UMD, /.(ts|tsx)$/.test(entry));
+  const babelLoaderOptions = {
+    ...babelConfig,
+    plugins: [
+      ...babelConfig.plugins,
+    ],
+    cacheDirectory: true,
+  };
+
   const {theme = false} = config;
+  const { peerDependencies, dependencies } = require(path.resolve(process.cwd(), 'package.json'))
+  const withAntd = peerDependencies?.antd || dependencies?.antd
   const cssLoaders = [require.resolve('css-loader'), postCssLoader];
   cssLoaders.unshift(type === 'prod'? MiniCssExtractPlugin.loader : require.resolve('style-loader'))
   const lessLoaders: RuleSetUse= [
@@ -84,7 +87,7 @@ export const getCommonConfig = async (config:any, type:string): Promise<Configur
   ];
   return {
     entry: {
-      main: path.resolve(basePath, 'src/main.tsx'),
+      main: entry
     },
     output: {
       path: path.resolve(basePath, 'dist'),
@@ -169,8 +172,8 @@ export const getCommonConfig = async (config:any, type:string): Promise<Configur
         ],
       }),
       new webpackBar(),
-      new AntdDayjsWebpackPlugin(),
-      ...(theme? [new AntdWebpackThemePlugin({})]:[]),
+      ...(withAntd? [new AntdDayjsWebpackPlugin()]:[]),
+      ...(withAntd&&theme? [new AntdWebpackThemePlugin({})]:[]),
     ],
     resolve: {
       alias: {

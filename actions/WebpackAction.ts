@@ -41,7 +41,7 @@ export class WebpackAction extends AbstractAction<WebpackInput, WebpackOption>{
   }
 
   private async runDev(port: number, analyzer: boolean){
-    const userConfig = await WebpackAction.getUserConfig(ENV.dev);
+    const userConfig = await this.getUserConfig(ENV.dev);
     const devConfig = await getDevConfig(userConfig);
     const { devServer:devServerConfig, ...otherConfig } = lodash.merge(devConfig, analyzer? bundlePlugins: {} )
     if(!devServerConfig) return;
@@ -54,7 +54,7 @@ export class WebpackAction extends AbstractAction<WebpackInput, WebpackOption>{
   }
 
   private async runProd(analyzer:boolean){
-    const userConfig = await WebpackAction.getUserConfig(ENV.prod);
+    const userConfig = await this.getUserConfig(ENV.prod);
     const prodConfig = await getProdConfig(userConfig);
     const mergedConfig = lodash.merge(prodConfig, analyzer? bundlePlugins: {})
     const config = await WebpackAction.formatConfig(mergedConfig, ENV.prod);
@@ -63,12 +63,17 @@ export class WebpackAction extends AbstractAction<WebpackInput, WebpackOption>{
     })
   }
 
-  private static async getUserConfig(type:string): Promise<webpack.Configuration>{
-    const userConfigPath = path.resolve(process.cwd(), '.bcs.js');
-    if(!fs.existsSync(userConfigPath)) return {};
+  private async getUserConfig(type:string): Promise<webpack.Configuration>{
+    const baseConfig: any = {};
+    const entry = this.getOptionValue('entry');
+    const userConfigPath = path.resolve(process.cwd(), '.bfe.js');
+    if(entry){
+      baseConfig.entry = { main: path.resolve(process.cwd(), entry as string)}
+    }
+    if(!fs.existsSync(userConfigPath)) return baseConfig;
     const config = await import(userConfigPath);
     const {dev, prod, ...common} = config;
-    return {...config[type], ...common}
+    return {...baseConfig, ...config[type], ...common}
   }
 
   private static async formatConfig(config:any = {}, env = ENV.dev): Promise<webpack.Configuration>{
