@@ -129,7 +129,7 @@ export const getRollupConfig = async (params: AllConfigs)=>{
     format: type as InternalModuleFormat,
     file: path.resolve(cwd, `${filePathMap[type]}/index.js`),
     name: pkg.name || 'components',
-    exports: type === BabelBuildType.CJS? 'auto' : 'default'
+    exports: 'auto'
   }
   config.plugins = getPlugins(params);
   config.external = Object.keys(pkg.peerDependencies || {});
