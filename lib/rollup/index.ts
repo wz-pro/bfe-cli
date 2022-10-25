@@ -40,9 +40,25 @@ export interface AllConfigs extends rollupConfigParams{
 
 const babelExtensions = [...DEFAULT_EXTENSIONS, '.ts', '.tsx'];
 
+function transformImportLess2Css() {
+  return {
+    name: 'transform-import-less-to-css',
+    visitor: {
+      ImportDeclaration(path:any, source: any) {
+        const re = /\.less$/;
+        // if(re.test(path.node.source.value)){
+        //   console.log('hello path:', path.node.source.value);
+        //   path.node.source.value = path.node.source.value.replace(re, '.css');
+        // }
+      }
+    }
+  }
+}
 const getPlugins = ({type, isTs = false, isNode = false, cwd, isLerna, watch }: AllConfigs): Plugin[]=>{
+  const {plugins, ...othersConfig} = getBabelConfig(type, isTs, isNode);
   const babelConfigs: RollupBabelInputPluginOptions = {
-    ...getBabelConfig(type, isTs, isNode),
+    ...othersConfig,
+    plugins: [transformImportLess2Css, ...plugins],
     exclude: "node_modules/**",
     babelHelpers: "runtime",
     extensions: [...DEFAULT_EXTENSIONS, '.ts', '.tsx'],
@@ -85,8 +101,7 @@ const getPlugins = ({type, isTs = false, isNode = false, cwd, isLerna, watch }: 
           url(),
           svgr(),
           postcss({
-            extract: 'style/index.css',
-            modules: false,
+            extract: false,
             autoModules: true,
             minimize: false,
             use: {
@@ -99,6 +114,7 @@ const getPlugins = ({type, isTs = false, isNode = false, cwd, isLerna, watch }: 
               sass: null,
               stylus: false,
             },
+            extensions: ['.css', '.less'],
             plugins:[
               autoprefixer({remove: false}),
             ]
