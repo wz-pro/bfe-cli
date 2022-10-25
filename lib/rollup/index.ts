@@ -5,6 +5,7 @@ import json from '@rollup/plugin-json';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import url from '@rollup/plugin-url';
 import svgr from '@svgr/rollup';
+import autoprefixer from "autoprefixer";
 import fs from 'fs';
 import path from 'path';
 import { InternalModuleFormat, Plugin, RollupOptions } from 'rollup';
@@ -14,7 +15,8 @@ import ts from 'typescript';
 
 import { getCachePath } from '../../utils';
 import { BabelBuildType, getBabelConfig } from '../babel';
-import { getPostCssConfig } from '../postcss';
+
+const LessPlugin = require('less-plugin-npm-import');
 
 interface PKG {
   main: string;
@@ -38,7 +40,7 @@ export interface AllConfigs extends rollupConfigParams{
 
 const babelExtensions = [...DEFAULT_EXTENSIONS, '.ts', '.tsx'];
 
-const getPlugins = ({type, isTs = false, isNode = false, cwd, isLerna}: AllConfigs): Plugin[]=>{
+const getPlugins = ({type, isTs = false, isNode = false, cwd, isLerna, watch }: AllConfigs): Plugin[]=>{
   const babelConfigs: RollupBabelInputPluginOptions = {
     ...getBabelConfig(type, isTs, isNode),
     exclude: "node_modules/**",
@@ -62,32 +64,51 @@ const getPlugins = ({type, isTs = false, isNode = false, cwd, isLerna}: AllConfi
 
   tsConfigData.exclude = [...(tsConfigData.exclude || []), 'types'];
 
+  const tsOptions = {
+    cwd: cwd,
+    typescript: ts,
+    clean: true,
+    cacheRoot: `${getCachePath()}/typescript2_cache`,
+    tsconfigDefaults: tsConfigData,
+    useTsconfigDeclarationDir: true,
+    tsconfigOverride: {
+      compilerOptions: {
+        target: 'esnext',
+        module: 'esnext',
+      },
+    },
+    exclude: [ "*.d.ts", "**/*.d.ts" ]
+  }
+
   return [
       ...(!isNode? [
           url(),
           svgr(),
           postcss({
-          ...getPostCssConfig() })]:
-          []
+            extract: 'style/index.css',
+            modules: false,
+            autoModules: true,
+            minimize: false,
+            use: {
+              less: {
+                plugins: [
+                  new LessPlugin({ prefix: '~' }),
+                ],
+                javascriptEnabled: true,
+              },
+              sass: null,
+              stylus: false,
+            },
+            plugins:[
+              autoprefixer({remove: false}),
+            ]
+          })
+          ]: []
       ),
     nodeResolve({ extensions: babelExtensions, preferBuiltins: true }),
     commonjs(),
     ...(isTs? [
-      typescript({
-        cwd: cwd,
-        typescript: ts,
-        clean: true,
-        cacheRoot: `${getCachePath()}/typescript2_cache`,
-        tsconfigDefaults: tsConfigData,
-        useTsconfigDeclarationDir: true,
-        tsconfigOverride: {
-          compilerOptions: {
-            target: 'esnext',
-            module: 'esnext',
-          },
-        },
-        exclude: [ "*.d.ts", "**/*.d.ts" ]
-      })
+      typescript(tsOptions)
     ]: []),
     babel(babelConfigs),
     json(),

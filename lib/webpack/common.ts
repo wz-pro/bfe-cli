@@ -6,7 +6,6 @@ import path from 'path';
 import { Configuration, RuleSetUse } from 'webpack';
 
 import { BabelBuildType, getBabelConfig } from '../babel';
-import { getPostCssConfig } from '../postcss';
 
 const webpackBar = require('webpackbar');
 const AntdDayjsWebpackPlugin = require('antd-dayjs-webpack-plugin');
@@ -59,7 +58,17 @@ const basePath = process.cwd();
 const postCssLoader = {
     loader: require.resolve('postcss-loader'),
     options: {
-      postcssOptions: getPostCssConfig()
+      postcssOptions: {
+        minimize: true,
+        plugins: [
+          [
+            'postcss-preset-env',
+            {
+              // 其他选项
+            },
+          ],
+        ],
+      }
     },
 };
 
