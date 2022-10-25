@@ -3,11 +3,18 @@
 .cache
 
 # output
-lib/**/*.js
 commands/**/*.js
-actions/**/*.js
-bin/**/*.js
-lib/**/*.d.ts
 commands/**/*.d.ts
+
+actions/**/*.js
 actions/**/*.d.ts
+
+lib/**/*.js
+lib/**/*.d.ts
+
+
+bin/**/*.js
 bin/**/*.d.ts
+
+utils/**/*.d.ts
+utils/**/*.js
