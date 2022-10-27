@@ -1,6 +1,6 @@
 {
   "name": "bfe-cli",
-  "version": "1.1.1-beta2",
+  "version": "1.1.1-beta3",
   "description": "fe tools",
   "main": "index.js",
   "scripts": {
@@ -57,7 +57,7 @@
     "cross-env": "^7.0.3",
     "css-loader": "^6.5.1",
     "css-minimizer-webpack-plugin": "^3.3.1",
-    "eslint": "8.22.0",
+    "eslint": "^8.26.0",
     "eslint-config-ali": "^13.0.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-import": "^2.25.3",
